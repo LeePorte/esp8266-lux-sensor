@@ -14,6 +14,7 @@ const char* mqtt_server = "CHANGEME"; //put your MQTT broker domain / IP address
 const char* mqtt_clientId = "CHANGEME"; //put your MQTT Client name here.
 const char* mqtt_userName = "CHANGEME"; //put your MQTT Username here.
 const char* mqtt_passWord = "CHANGEME"; //put your MQTT Password here.
+const String mqtt_topic = "CHANGEME"; //put your MQTT Topic here.
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -58,6 +59,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 } //end callback
 
 void reconnect() {
+  char* pubsubtopic = "";
   // Loop until we're reconnected
   while (client.connected() == false)
   {
@@ -66,8 +68,14 @@ void reconnect() {
     if (client.connected() == true)
     {
       Serial.println("connected");
-      client.subscribe("tele/lux-sensor/LWT");
-      client.publish("tele/lux-sensor/LWT", "online");
+      String topic = "tele/";
+      topic += mqtt_topic;
+      topic += "/LWT";
+      char topicBuf[100];
+      topic.toCharArray(topicBuf, 100);
+
+      client.subscribe(topicBuf);
+      client.publish(topicBuf, "online");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -99,17 +107,17 @@ void handleRoot() {
   server.send(200, "text/html", s);
 }
 
-void handleNotFound(){
+void handleNotFound() {
   server.send(404, "text/plain", "404: Not found");
 }
 
-void luxData(){
- String lux_value = String(currentLuxLevel);
- server.send(200, "text/plain", lux_value);
+void luxData() {
+  String lux_value = String(currentLuxLevel);
+  server.send(200, "text/plain", lux_value);
 }
 
 void mqttMessage() {
-   long now = millis();
+  long now = millis();
   lastMsgSent = now;
   static char mqttMsg[15];
 
@@ -127,12 +135,17 @@ void mqttMessage() {
   currentLuxLevel = average;
   Serial.println(mqttMsg);
   delay(1000);
-  
+
   if (client.connected() == false) {
     reconnect();
   }
   client.loop();
-  client.publish("cmnd/lux-sensor/Value", mqttMsg);
+  String topic = "cmnd/";
+  topic += mqtt_topic;
+  topic += "/Value";
+  char publishBuf[100];
+  topic.toCharArray(publishBuf, 100);
+  client.publish(publishBuf, mqttMsg);
 }
 
 void loop(void) {

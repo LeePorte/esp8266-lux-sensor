@@ -32,7 +32,7 @@ ESP8266WebServer server(80);
 void handleRoot();
 void handleNotFound();
 
-void setup_wifi() {
+void setupWifi() {
   delay(100);
   WiFi.mode(WIFI_STA);
   WiFi.hostname(HostName);
@@ -66,7 +66,6 @@ void reconnect() {
     if (client.connected() == true)
     {
       Serial.println("connected");
-      //once connected to MQTT broker, subscribe command if any
       client.subscribe("tele/lux-sensor/LWT");
       client.publish("tele/lux-sensor/LWT", "online");
     } else {
@@ -81,7 +80,7 @@ void reconnect() {
 
 void setup(void) {
   Serial.begin(115200);
-  setup_wifi();
+  setupWifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
   myLux.begin();
@@ -111,13 +110,8 @@ void luxData(){
 
 void mqttMessage() {
    long now = millis();
-  //send message every minuite
-  //delay(60000);
   lastMsgSent = now;
   static char mqttMsg[15];
-
-//  float lux = myLux.lightStrengthLux();
-//  dtostrf(lux, 6, 2, mqttMsg);
 
   total = total - readings[readIndex];
   readings[readIndex] = myLux.lightStrengthLux();
@@ -134,12 +128,10 @@ void mqttMessage() {
   Serial.println(mqttMsg);
   delay(1000);
   
-//  Serial.println(mqttMsg);
   if (client.connected() == false) {
     reconnect();
   }
   client.loop();
-  //publish sensor data to MQTT broker
   client.publish("cmnd/lux-sensor/Value", mqttMsg);
 }
 

@@ -73,7 +73,7 @@ void reconnect() {
       topic += "/LWT";
       char topicBuf[100];
       topic.toCharArray(topicBuf, 100);
-      
+
       client.subscribe(topicBuf);
       client.publish(topicBuf, "online");
     } else {
@@ -107,17 +107,17 @@ void handleRoot() {
   server.send(200, "text/html", s);
 }
 
-void handleNotFound(){
+void handleNotFound() {
   server.send(404, "text/plain", "404: Not found");
 }
 
-void luxData(){
- String lux_value = String(currentLuxLevel);
- server.send(200, "text/plain", lux_value);
+void luxData() {
+  String lux_value = String(currentLuxLevel);
+  server.send(200, "text/plain", lux_value);
 }
 
 void mqttMessage() {
-   long now = millis();
+  long now = millis();
   lastMsgSent = now;
   static char mqttMsg[15];
 
@@ -135,7 +135,7 @@ void mqttMessage() {
   currentLuxLevel = average;
   Serial.println(mqttMsg);
   delay(1000);
-  
+
   if (client.connected() == false) {
     reconnect();
   }

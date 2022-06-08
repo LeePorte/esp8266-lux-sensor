@@ -3,6 +3,7 @@
 #include <PubSubClient.h>
 #include <DFRobot_B_LUX_V30B.h>
 #include <ESP8266WebServer.h>
+#include "index.h"
 
 DFRobot_B_LUX_V30B    myLux(13);//The sensor chip is set to 13 pins, SCL and SDA adopt default configuration
 // Update these with values suitable for your network.
@@ -24,6 +25,7 @@ int readings[numReadings];
 int readIndex = 0;
 int total = 0;
 int average = 0;
+int currentLuxLevel = 0;
 
 //ESP8266WiFiMulti wifiMulti;
 ESP8266WebServer server(80);
@@ -84,6 +86,7 @@ void setup(void) {
   client.setCallback(callback);
   myLux.begin();
   server.on("/", handleRoot);
+  server.on("/luxread", luxData);
   server.onNotFound(handleNotFound);
   server.begin();
   Serial.println("HTTP server started");
@@ -93,11 +96,17 @@ void setup(void) {
 }
 
 void handleRoot() {
-  server.send(200, "text/plain", "Hello world!");   // Send HTTP status 200 (Ok) and send some text to the browser/client
+  String s = webpage;
+  server.send(200, "text/html", s);
 }
 
 void handleNotFound(){
-  server.send(404, "text/plain", "404: Not found"); // Send HTTP status 404 (Not Found) when there's no handler for the URI in the request
+  server.send(404, "text/plain", "404: Not found");
+}
+
+void luxData(){
+ String lux_value = String(currentLuxLevel);
+ server.send(200, "text/plain", lux_value);
 }
 
 void mqttMessage() {
@@ -121,6 +130,7 @@ void mqttMessage() {
 
   average = total / numReadings;
   dtostrf(average, 6, 2, mqttMsg);
+  currentLuxLevel = average;
   Serial.println(mqttMsg);
   delay(1000);
   
